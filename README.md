@@ -40,7 +40,7 @@ Dataset: Fashion-MNIST (downloaded automatically by torchvision).
 - The convex check: FISTA matches cvxpy to a 1.7e-6 objective gap and a 99.4% support overlap, and ISTA / FISTA follow their O(1/k) / O(1/k^2) bounds.
 - Distillation itself gives only +0.1 to +0.3 points at moderate budgets (about 1 std over 3 seeds) and none at 1 to 2%.
 
-See `results/summary.md` and `results/figures/`.
+See `report/report.pdf` for the full report, and `results/summary.md` and `results/figures/` for all numbers and plots.
 
 ## Libraries used
 
