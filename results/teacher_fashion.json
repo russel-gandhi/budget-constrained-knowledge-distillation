@@ -1,0 +1,7 @@
+{
+  "dataset": "fashion",
+  "params": 1867850,
+  "val_acc": 0.9304,
+  "test_acc": 0.9304,
+  "train_seconds": 148.21178197860718
+}

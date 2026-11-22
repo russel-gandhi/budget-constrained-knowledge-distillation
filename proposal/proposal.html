@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Project Proposal</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+<style>
+  @page { size: A4; margin: 14mm 16mm 12mm 16mm; }
+  body { font-family: "Cambria", "Times New Roman", serif; font-size: 10.1pt; line-height: 1.28; color: #000; margin: 0; }
+  h1 { font-size: 14pt; text-align: center; margin: 0 0 2px 0; }
+  .sub { text-align: center; font-size: 9.6pt; margin-bottom: 6px; }
+  h2 { font-size: 10.8pt; margin: 7px 0 2px 0; border-bottom: 0.6pt solid #444; padding-bottom: 1px; }
+  p { margin: 2px 0 3px 0; text-align: justify; }
+  ul, ol { margin: 2px 0 3px 0; padding-left: 17px; }
+  li { margin: 1px 0; text-align: justify; }
+  .katex { font-size: 1.0em; }
+  .katex-display { margin: 4px 0; }
+  .meta { font-size: 9.4pt; }
+</style>
+</head>
+<body>
+
+<h1>Budget-Constrained Knowledge Distillation:<br>Compressing Neural Networks via Sparse Optimisation</h1>
+<div class="sub">Project Proposal &nbsp;·&nbsp; Team: <b>SirCook</b> &nbsp;·&nbsp; Members: Russel Gandhi (BA2025041), Pratyush Prasad (BA2025034), Naman Sharma (BA2025025)</div>
+
+<h2>1. Problem Statement and Motivation</h2>
+<p>Modern neural networks achieve high accuracy but are too large for memory- and energy-limited devices (phones, microcontrollers). <b>Knowledge distillation</b> (KD) trains a small <i>student</i> network to mimic the softened output probabilities of a large, pre-trained <i>teacher</i>; these “soft targets” carry more information than hard labels. KD alone, however, does not control model size precisely. We pose compression as an explicit <b>optimisation problem</b>: train the student to match the teacher <i>subject to a budget on the number of non-zero parameters</i>, solve it with <b>proximal gradient methods</b>, and study the resulting <b>accuracy-versus-size trade-off</b>.</p>
+
+<h2>2. Mathematical Formulation</h2>
+<p><b>Variables:</b> student weights $w \in \mathbb{R}^d$. <b>Data:</b> training pairs $(x_i, y_i)_{i=1}^N$, teacher logits $z^t(x_i)$ (fixed), student logits $z^s(x_i; w)$, temperature $T>0$, mixing weight $\alpha\in[0,1]$, $p^{(T)} = \mathrm{softmax}(z/T)$. <b>Distillation objective:</b></p>
+$$F(w) = \frac{1}{N}\sum_{i=1}^{N}\Big[\alpha\,T^{2}\,\mathrm{KL}\big(p^{(T)}_{t}(x_i)\,\big\|\,p^{(T)}_{s}(x_i;w)\big) + (1-\alpha)\,\mathrm{CE}\big(y_i,\, p^{(1)}_{s}(x_i;w)\big)\Big]$$
+<p><b>Budget-constrained problem</b> (the true goal; non-convex, combinatorial): &nbsp; $\min_{w} F(w)\ \ \text{s.t.}\ \ \|w\|_0 \le k$, where $k$ is the parameter budget. We study three tractable formulations:</p>
+<ol>
+  <li><b>$\ell_1$-regularised (convex relaxation of the budget):</b> $\ \min_w F(w) + \lambda\|w\|_1$; &nbsp;$\lambda$ is swept to reach different sizes.</li>
+  <li><b>Hard budget via projection:</b> $\ \min_w F(w) + \iota_{\{\|w\|_0\le k\}}(w)$, where $\iota$ is the indicator function; its proximal operator is projection onto the $k$-sparse set (keep the $k$ largest-magnitude entries).</li>
+  <li><b>Structured (group) sparsity:</b> $\ \min_w F(w) + \lambda\sum_{g\in\mathcal{G}}\|w_g\|_2$, where each group $g$ is all weights of one neuron/filter, so entire neurons are removed (real speed-ups, not only memory savings).</li>
+</ol>
+
+<h2>3. Planned Method and Solver</h2>
+<p>All three problems have the form <i>smooth loss + non-smooth term</i>, which is exactly the setting of <b>proximal gradient descent</b>. With step size $\eta$, each iteration is</p>
+$$w^{(j+1)} = \mathrm{prox}_{\eta h}\big(w^{(j)} - \eta\,\nabla \hat F(w^{(j)})\big),$$
+<p>where $\nabla\hat F$ is a mini-batch gradient (computed with PyTorch autograd) and the proximal operators are implemented from scratch:<b>soft-thresholding</b> $\mathrm{sign}(v)\max(|v|-\eta\lambda,0)$ for $\ell_1$ (ISTA), <b>hard-thresholding</b> for the $\ell_0$ budget (Iterative Hard Thresholding), and <b>block soft-thresholding</b> $v_g\max(1-\eta\lambda/\|v_g\|_2,0)$ for group sparsity. We will also implement the accelerated variant (<b>FISTA</b>, Nesterov momentum) and backtracking line search for $\eta$.</p>
+<ul>
+  <li><b>Convex sanity check:</b> with a linear (softmax-regression) student, $F$ is convex, so we can compare ISTA vs. FISTA against the theoretical $O(1/j)$ vs. $O(1/j^2)$ rates and verify the optimum against <b>cvxpy</b>.</li>
+  <li><b>Main experiment:</b> teacher = large pre-trained CNN; student = small CNN/MLP; datasets MNIST / Fashion-MNIST, then CIFAR-10 if time allows.</li>
+  <li><b>Baselines:</b> (a) student trained on labels only, (b) dense KD student, (c) KD followed by one-shot magnitude pruning, versus our (d) KD + $\ell_1$-prox, (e) KD + IHT, (f) KD + group-lasso.</li>
+</ul>
+
+<h2>4. Planned Analysis</h2>
+<ul>
+  <li><b>Accuracy-vs-size Pareto curves</b> (test accuracy against non-zero parameters / model size in KB) for every method, by sweeping $\lambda$ and $k$.</li>
+  <li><b>Does distillation help under a budget?</b> KD vs. label-only training at equal size; effect of $T$ and $\alpha$.</li>
+  <li><b>Optimisation behaviour:</b> convergence of objective and sparsity, ISTA vs. FISTA, step-size sensitivity, and how sparsity is distributed across layers.</li>
+</ul>
+
+</body>
+</html>

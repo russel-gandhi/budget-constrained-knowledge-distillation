@@ -1,0 +1,103 @@
+{
+ "name": "prune_kd_0.2",
+ "method": "prune_kd",
+ "seed": 0,
+ "T": 4.0,
+ "alpha": 0.9,
+ "beta": 0.9,
+ "epochs": 20,
+ "ft_epochs": 5,
+ "budget": 0.2,
+ "history": [],
+ "pre_ft_test_acc": 0.8281,
+ "pre_ft_val_acc": 0.828,
+ "ft_history": [
+  {
+   "epoch": 1,
+   "F": 0.678063633414202,
+   "h": 0.0,
+   "val_acc": 0.8942,
+   "nnz_weights": 53240,
+   "density": 0.2,
+   "eta": 0.009049375028321063,
+   "backtracks_per_step": 0.0,
+   "objective": 0.678063633414202
+  },
+  {
+   "epoch": 2,
+   "F": 0.32676899748486143,
+   "h": 0.0,
+   "val_acc": 0.8958,
+   "nnz_weights": 53240,
+   "density": 0.2,
+   "eta": 0.006552031766824197,
+   "backtracks_per_step": 0.0,
+   "objective": 0.32676899748486143
+  },
+  {
+   "epoch": 3,
+   "F": 0.30005383526169976,
+   "h": 0.0,
+   "val_acc": 0.8978,
+   "nnz_weights": 53240,
+   "density": 0.2,
+   "eta": 0.003461865122020039,
+   "backtracks_per_step": 0.0,
+   "objective": 0.30005383526169976
+  },
+  {
+   "epoch": 4,
+   "F": 0.28846625543610993,
+   "h": 0.0,
+   "val_acc": 0.8976,
+   "nnz_weights": 53240,
+   "density": 0.2,
+   "eta": 0.0009592137213225532,
+   "backtracks_per_step": 0.0,
+   "objective": 0.28846625543610993
+  },
+  {
+   "epoch": 5,
+   "F": 0.2832327754345051,
+   "h": 0.0,
+   "val_acc": 0.8976,
+   "nnz_weights": 53240,
+   "density": 0.2,
+   "eta": 5.337805649152649e-09,
+   "backtracks_per_step": 0.0,
+   "objective": 0.2832327754345051
+  }
+ ],
+ "test_acc": 0.8948,
+ "val_acc": 0.8976,
+ "size": {
+  "params_total": 266610,
+  "nnz_total": 53650,
+  "prunable": 266200,
+  "nnz_weights": 53240,
+  "density": 0.2,
+  "dense_kb": 1041.4453125,
+  "sparse_kb": 417.5390625,
+  "layer_nnz": [
+   42537,
+   9997,
+   706
+  ],
+  "layer_size": [
+   235200,
+   30000,
+   1000
+  ]
+ },
+ "structured": {
+  "inputs_alive": 784,
+  "neurons_alive": [
+   298,
+   98
+  ],
+  "compact_params": 264222,
+  "compact_max_abs_diff": 5.7220458984375e-06
+ },
+ "seconds": 13.391558647155762,
+ "teacher_test_acc": 0.9304
+}

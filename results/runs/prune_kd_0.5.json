@@ -1,0 +1,103 @@
+{
+ "name": "prune_kd_0.5",
+ "method": "prune_kd",
+ "seed": 0,
+ "T": 4.0,
+ "alpha": 0.9,
+ "beta": 0.9,
+ "epochs": 20,
+ "ft_epochs": 5,
+ "budget": 0.5,
+ "history": [],
+ "pre_ft_test_acc": 0.8978,
+ "pre_ft_val_acc": 0.8956,
+ "ft_history": [
+  {
+   "epoch": 1,
+   "F": 0.24022976981345998,
+   "h": 0.0,
+   "val_acc": 0.8976,
+   "nnz_weights": 133100,
+   "density": 0.5,
+   "eta": 0.009049375028321063,
+   "backtracks_per_step": 0.0,
+   "objective": 0.24022976981345998
+  },
+  {
+   "epoch": 2,
+   "F": 0.22561187196609586,
+   "h": 0.0,
+   "val_acc": 0.8996,
+   "nnz_weights": 133100,
+   "density": 0.5,
+   "eta": 0.006552031766824197,
+   "backtracks_per_step": 0.0,
+   "objective": 0.22561187196609586
+  },
+  {
+   "epoch": 3,
+   "F": 0.21778480240771936,
+   "h": 0.0,
+   "val_acc": 0.8996,
+   "nnz_weights": 133100,
+   "density": 0.5,
+   "eta": 0.003461865122020039,
+   "backtracks_per_step": 0.0,
+   "objective": 0.21778480240771936
+  },
+  {
+   "epoch": 4,
+   "F": 0.21194673540980316,
+   "h": 0.0,
+   "val_acc": 0.9002,
+   "nnz_weights": 133100,
+   "density": 0.5,
+   "eta": 0.0009592137213225532,
+   "backtracks_per_step": 0.0,
+   "objective": 0.21194673540980316
+  },
+  {
+   "epoch": 5,
+   "F": 0.208238479633664,
+   "h": 0.0,
+   "val_acc": 0.9002,
+   "nnz_weights": 133100,
+   "density": 0.5,
+   "eta": 5.337805649152649e-09,
+   "backtracks_per_step": 0.0,
+   "objective": 0.208238479633664
+  }
+ ],
+ "test_acc": 0.8969,
+ "val_acc": 0.9002,
+ "size": {
+  "params_total": 266610,
+  "nnz_total": 133510,
+  "prunable": 266200,
+  "nnz_weights": 133100,
+  "density": 0.5,
+  "dense_kb": 1041.4453125,
+  "sparse_kb": 1041.4453125,
+  "layer_nnz": [
+   113545,
+   18692,
+   863
+  ],
+  "layer_size": [
+   235200,
+   30000,
+   1000
+  ]
+ },
+ "structured": {
+  "inputs_alive": 784,
+  "neurons_alive": [
+   300,
+   100
+  ],
+  "compact_params": 266610,
+  "compact_max_abs_diff": 7.62939453125e-06
+ },
+ "seconds": 13.678710460662842,
+ "teacher_test_acc": 0.9304
+}

@@ -1,0 +1,103 @@
+{
+ "name": "prune_kd_0.01",
+ "method": "prune_kd",
+ "seed": 0,
+ "T": 4.0,
+ "alpha": 0.9,
+ "beta": 0.9,
+ "epochs": 20,
+ "ft_epochs": 5,
+ "budget": 0.01,
+ "history": [],
+ "pre_ft_test_acc": 0.2076,
+ "pre_ft_val_acc": 0.2006,
+ "ft_history": [
+  {
+   "epoch": 1,
+   "F": 7.049340121690617,
+   "h": 0.0,
+   "val_acc": 0.7808,
+   "nnz_weights": 2662,
+   "density": 0.01,
+   "eta": 0.009049375028321063,
+   "backtracks_per_step": 0.0,
+   "objective": 7.049340121690617
+  },
+  {
+   "epoch": 2,
+   "F": 1.7377797756084177,
+   "h": 0.0,
+   "val_acc": 0.8212,
+   "nnz_weights": 2662,
+   "density": 0.01,
+   "eta": 0.006552031766824197,
+   "backtracks_per_step": 0.0,
+   "objective": 1.7377797756084177
+  },
+  {
+   "epoch": 3,
+   "F": 1.4964756289193797,
+   "h": 0.0,
+   "val_acc": 0.8236,
+   "nnz_weights": 2662,
+   "density": 0.01,
+   "eta": 0.003461865122020039,
+   "backtracks_per_step": 0.0,
+   "objective": 1.4964756289193797
+  },
+  {
+   "epoch": 4,
+   "F": 1.419723411770754,
+   "h": 0.0,
+   "val_acc": 0.8262,
+   "nnz_weights": 2662,
+   "density": 0.01,
+   "eta": 0.0009592137213225532,
+   "backtracks_per_step": 0.0,
+   "objective": 1.419723411770754
+  },
+  {
+   "epoch": 5,
+   "F": 1.3954793189847192,
+   "h": 0.0,
+   "val_acc": 0.8264,
+   "nnz_weights": 2662,
+   "density": 0.01,
+   "eta": 5.337805649152649e-09,
+   "backtracks_per_step": 0.004651162790697674,
+   "objective": 1.3954793189847192
+  }
+ ],
+ "test_acc": 0.8307,
+ "val_acc": 0.8264,
+ "size": {
+  "params_total": 266610,
+  "nnz_total": 3072,
+  "prunable": 266200,
+  "nnz_weights": 2662,
+  "density": 0.01,
+  "dense_kb": 1041.4453125,
+  "sparse_kb": 22.3984375,
+  "layer_nnz": [
+   1504,
+   841,
+   317
+  ],
+  "layer_size": [
+   235200,
+   30000,
+   1000
+  ]
+ },
+ "structured": {
+  "inputs_alive": 472,
+  "neurons_alive": [
+   161,
+   81
+  ],
+  "compact_params": 90095,
+  "compact_max_abs_diff": 7.62939453125e-06
+ },
+ "seconds": 14.415167093276978,
+ "teacher_test_acc": 0.9304
+}

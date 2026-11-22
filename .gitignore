@@ -1,0 +1,16 @@
+# private notes - never commit
+explanation/
+
+# downloaded datasets and large binaries
+data/
+results/models/
+*.pt
+
+# raw console logs (contain local paths)
+results/run_stdout.txt
+results/convex_log.txt
+
+# python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
