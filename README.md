@@ -93,9 +93,3 @@ make_plots.py      step 4
 tests/test_prox.py checks that every prox really is the argmin it should be
 results/           outputs: runs/*.json, figures/*.png, summary.md, convex/
 ```
-
-## Use of AI tools
-
-Parts of the code were written with the help of an AI assistant (Claude). The
-team reviewed the code and is responsible for the formulation, design
-decisions and analysis.
