@@ -70,6 +70,7 @@ python convex_check.py                 # 2. ISTA / FISTA vs cvxpy (convex)  (~2 
 python run_experiments.py --suite all  # 3. all methods, ablations, seeds   (~1-1.5 h on GPU)
 python make_plots.py                   # 4. figures + summary table
 python -m tests.test_prox              # optional: unit tests of the proximal operators
+python demo.py                         # optional: one live KD + IHT run at a 2% budget (~30 s on GPU, needs step 1)
 ```
 
 `run_experiments.py` skips runs whose results already exist, so it can be
