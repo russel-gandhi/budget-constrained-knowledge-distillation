@@ -10,6 +10,9 @@ results/models/
 results/run_stdout.txt
 results/convex_log.txt
 
+# submission archive (built from the repo)
+*.zip
+
 # python
 __pycache__/
 *.pyc
