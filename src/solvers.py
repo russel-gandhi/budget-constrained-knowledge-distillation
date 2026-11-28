@@ -1,17 +1,5 @@
-"""Stochastic (accelerated) proximal gradient training.
-
-Problem:   min_w  F(w) + h(w)
-   F = distillation loss (smooth, estimated on mini-batches)
-   h = the non-smooth "size" term (l1, group lasso, l0-ball indicator, mask)
-
-Iteration (with extrapolation / momentum beta, FISTA-style):
-   y_k     = w_k + beta * (w_k - w_{k-1})
-   w_{k+1} = prox_{eta_k * h}( y_k - eta_k * grad F_batch(y_k) )
-
-beta = 0 gives plain proximal SGD (stochastic ISTA). The gradient comes from
-PyTorch autograd; the update rule, the extrapolation, the step-size schedule
-and all proximal operators are implemented here (no torch.optim is used).
-"""
+# Minimize smooth batch loss F plus a sparsity rule h: extrapolate, take an
+# autograd gradient step on F, then apply the appropriate prox for h.
 import math
 import torch
 
@@ -35,7 +23,7 @@ class NoReg:
 
 
 class L1(NoReg):
-    """h(w) = lam * ||w||_1  over all prunable weights."""
+    # Penalize individual weights; soft thresholding creates exact zeros.
     name = "l1"
 
     def __init__(self, lam):
@@ -52,13 +40,8 @@ class L1(NoReg):
 
 
 class GroupLasso(NoReg):
-    """h(w) = lam * sum_g sqrt(|g|) * ||w_g||_2, groups = neurons of hidden layers.
-
-    Group g = incoming weights + bias of one hidden neuron. The sqrt(|g|)
-    weight is the standard group-lasso normalisation so that layers with
-    longer rows (784 inputs vs 300) are not penalised unfairly.
-    The output layer is not grouped (we cannot delete a class).
-    """
+    # Penalize hidden neuron groups (incoming row plus bias), weighted by
+    # sqrt(group size). The output layer stays intact so no class is deleted.
     name = "group"
 
     def __init__(self, lam):
@@ -83,15 +66,8 @@ class GroupLasso(NoReg):
 
 
 class HardBudget(NoReg):
-    """h(w) = indicator{ ||w||_0 <= k }  ->  prox = keep top-k magnitudes (IHT).
-
-    Starting a randomly initialised network at its final tiny budget throws
-    away information before the weights mean anything, so the budget is
-    tightened gradually: k_t goes from d (dense) to k_final over the first
-    `ramp` fraction of iterations with the cubic schedule of Zhu & Gupta (2017),
-    then stays at k_final. ramp = 0 gives IHT with a fixed budget from step 0.
-    Every iterate after the ramp satisfies the constraint exactly.
-    """
+    # IHT: project onto a global top-k weight budget after each gradient step.
+    # Start dense and tighten over the ramp fraction of steps; ramp=0 is fixed.
     name = "iht"
 
     def __init__(self, k_final, total_steps, ramp=0.5):
@@ -99,6 +75,7 @@ class HardBudget(NoReg):
         self.d = None
 
     def k_at(self, it):
+        # Cubic schedule: d -> k_final during ramp, then exactly k_final.
         ramp_steps = int(self.ramp * self.total_steps)
         if it >= ramp_steps:
             return self.k_final
@@ -115,12 +92,7 @@ class HardBudget(NoReg):
 
 
 class FixedMask(NoReg):
-    """h(w) = indicator{ w is zero outside a fixed support }  ->  prox = w * mask.
-
-    Used to fine-tune ("debias") a sparse model: the support found by l1 /
-    IHT / pruning is frozen and the surviving weights are re-optimised without
-    any shrinkage penalty.
-    """
+    # Freeze zero positions during fine-tuning while surviving weights adapt.
     name = "mask"
 
     def __init__(self, masks):
@@ -139,6 +111,7 @@ def support_masks(model):
 # ----------------------------------------------------------------------------
 @torch.no_grad()
 def evaluate(model, x, y, batch_size=2000):
+    # Return classification accuracy on (x, y), using eval mode for inference.
     model.eval()
     correct = 0
     for xb, yb in batches((x, y), batch_size, shuffle=False):
@@ -150,23 +123,11 @@ def evaluate(model, x, y, batch_size=2000):
 def train_prox(model, data, loss_fn, reg=None, epochs=20, lr=0.05, beta=0.9,
                batch_size=128, teacher_logits=None, log=print, tag="", warmup=1.0,
                backtrack=True, max_backtracks=20):
-    """Stochastic accelerated proximal gradient on F + h.
-
-    data           : dict from load_dataset (uses "train" and "val")
-    loss_fn        : f(student_logits, teacher_logits, y) -> scalar F on the batch
-    reg            : one of the h(w) classes above (NoReg if None)
-    lr             : peak step size; linear warm-up for `warmup` epochs, then
-                     cosine decay to 0 (large early steps + momentum + strong
-                     shrinkage made big-lambda group-lasso runs diverge)
-    beta           : extrapolation weight (0 = plain proximal SGD / ISTA)
-    teacher_logits : precomputed teacher logits aligned with data["train"]
-    backtrack      : if True, the scheduled eta is only an upper bound; each
-                     step is shrunk by halving until the sufficient-decrease
-                     condition holds on the mini-batch (prevents blow-ups once
-                     the network is very sparse and the curvature is large)
-
-    Returns a history list with one dict per epoch.
-    """
+    # Update model in place; return one metric dict per epoch.
+    # data contains aligned (images, labels) for train/val; teacher_logits
+    # aligns with train images. loss_fn(logits, teacher_logits, labels) -> scalar.
+    # reg supplies h and its prox; beta=0 disables extrapolation. lr is the
+    # peak scheduled step, and backtracking can halve it for each batch.
     reg = reg or NoReg()
     xtr, ytr = data["train"]
     tl = teacher_logits if teacher_logits is not None else torch.zeros(len(ytr), 1, device=xtr.device)

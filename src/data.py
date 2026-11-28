@@ -1,5 +1,4 @@
-"""Dataset loading. Everything is kept as tensors (on the GPU if available),
-which is much faster than a DataLoader for 28x28 images."""
+# Keep the small images as tensors so mini-batches can be indexed directly.
 import torch
 import torch.nn.functional as F
 from torchvision import datasets
@@ -10,12 +9,8 @@ CLASSES = {"mnist": datasets.MNIST, "fashion": datasets.FashionMNIST}
 
 
 def load_dataset(name="fashion", root="data", device="cpu", val_size=5000, split_seed=0):
-    """Returns {"train": (x, y), "val": (x, y), "test": (x, y)}.
-
-    The official 60k training set is split into 55k train / 5k validation with
-    a fixed seed (so every script sees the same split). Validation is used to
-    choose hyper-parameters (T, alpha); the test set is only used for reporting.
-    """
+    # Return {"train": (images, labels), "val": (...), "test": (...)} on device.
+    # The fixed split reserves val_size of the official 60k training images.
     cls = CLASSES[name]
     mean, std = STATS[name]
 
@@ -32,7 +27,7 @@ def load_dataset(name="fashion", root="data", device="cpu", val_size=5000, split
 
 
 def batches(tensors, batch_size, shuffle=True):
-    """Yield aligned mini-batches from a tuple of tensors with equal first dim."""
+    # Yield aligned slices of tensors that share the same first dimension.
     n = tensors[0].shape[0]
     dev = tensors[0].device
     idx = torch.randperm(n, device=dev) if shuffle else torch.arange(n, device=dev)
@@ -42,8 +37,7 @@ def batches(tensors, batch_size, shuffle=True):
 
 
 def augment(x, pad=2, flip=True):
-    """Random translation (pad + random crop, per sample) and optional
-    horizontal flip. Used only for training the teacher."""
+    # Return per-image random crops/translations and optional horizontal flips.
     n, _, h, w = x.shape
     if flip:
         m = torch.rand(n, device=x.device) < 0.5

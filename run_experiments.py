@@ -1,24 +1,5 @@
-"""Step 3: distil the teacher into a sparse student with every method and
-sweep the size budget, to trace accuracy-vs-size curves.
-
-Methods (all trained with the same solver, `train_prox`, only h(w) differs):
-    dense_ce        student trained on labels only, no size constraint
-    dense_kd        student distilled from the teacher, no size constraint
-    prune_kd_<f>    dense_kd -> keep top f*d weights once -> masked fine-tune
-    iht_kd_<f>      KD + hard budget ||w||_0 <= f*d   (IHT, budget ramped in)
-    iht_ce_<f>      same as iht_kd but labels only (does KD help under a budget?)
-    l1_kd_<lam>     KD + lam*||w||_1                 (soft-thresholding)
-    group_kd_<lam>  KD + lam*sum_g sqrt(|g|)||w_g||  (removes whole neurons)
-Every sparse method is followed by the same masked fine-tuning ("debiasing").
-
-Ablations (suite "ablation"): temperature T, mixing weight alpha,
-extrapolation on/off, gradual vs fixed budget, line search on/off.
-Suite "seeds": the KD-vs-labels comparison repeated with extra seeds.
-
-    python run_experiments.py --suite main
-    python run_experiments.py --suite ablation
-Runs already on disk are skipped, so the script can be stopped and resumed.
-"""
+# Sweep student compression methods and budgets with the same training loop.
+# Each run writes config, epoch history, accuracy, and size to results/runs/.
 import argparse
 import json
 import os
@@ -73,6 +54,8 @@ class Runner:
     # ------------------------------------------------------------------
     def run(self, name, method, reg_fn=None, T=None, alpha=None, beta=None,
             init_from=None, prune_frac=None, finetune=True, save_model=False, seed=None, **extra):
+        # Train one seeded student (or load dense_kd for one-shot pruning),
+        # optionally fine-tune its fixed support, then save a run JSON.
         path = os.path.join(self.run_dir, name + ".json")
         if os.path.exists(path) and not self.a.overwrite:
             self.log(f"skip {name} (exists)")
@@ -165,8 +148,7 @@ class Runner:
         self.run("abl_group_nobacktrack", "abl_backtrack", lambda: GroupLasso(2e-3), lam=2e-3, backtrack=False)
 
     def seeds_suite(self):
-        """Repeat the KD-vs-labels comparison with extra seeds: the gap is small,
-        so we need to know whether it is larger than seed-to-seed noise."""
+        # Repeat matched KD/label-only runs to estimate seed-to-seed variation.
         a = self.a
         for s in a.extra_seeds:
             self.run(f"dense_ce_s{s}", "dense_ce", alpha=0.0, seed=s)

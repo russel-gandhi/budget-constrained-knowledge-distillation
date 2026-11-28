@@ -1,8 +1,4 @@
-"""Step 4: turn results/runs/*.json into figures and a summary table.
-
-    python make_plots.py
-Writes results/figures/*.png and results/summary.md
-"""
+# Turn saved run JSONs into accuracy/size plots and results/summary.md.
 import glob
 import json
 import os
@@ -36,7 +32,7 @@ def load():
 
 
 def by_method(runs):
-    """Seed-0 runs grouped by method (extra seeds are only used in kd_gain)."""
+    # Return seed-0 runs grouped by method and sorted by nonzero weight count.
     g = defaultdict(list)
     for r in runs.values():
         if r.get("seed", 0) == 0:
@@ -78,8 +74,8 @@ def pareto(runs, g, xkey, fname, xlabel, title):
 
 
 def kd_gain(runs):
-    """KD minus label-only test accuracy at each budget, mean +- std over seeds
-    (the two runs of a pair share the seed, i.e. the same initial weights)."""
+    # Plot matched-seed KD minus label-only accuracy by budget; return
+    # (budget, KD mean/std, CE mean/std, gain mean/std, seed count) rows.
     import numpy as np
     acc = defaultdict(dict)                      # (budget) -> {(method, seed): acc}
     for r in runs.values():
@@ -215,7 +211,7 @@ def curves(runs):
 
 
 def layers(g):
-    """Where does each method put its budget? Density per layer at ~2-5%."""
+    # Compare per-layer weight density at roughly 2-5% overall density.
     fig, ax = plt.subplots(figsize=(7, 3.6))
     picks = []
     for m in ["iht_kd", "prune_kd", "l1_kd", "group_kd"]:

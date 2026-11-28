@@ -1,20 +1,5 @@
-"""Step 2: convex sanity check of the solvers.
-
-With a *linear* (softmax-regression) student the distillation objective is
-convex, so we can (i) compute the exact optimum with an off-the-shelf convex
-solver (cvxpy + Clarabel) and (ii) check our proximal gradient methods against
-the theory: ISTA converges as O(1/k), FISTA as O(1/k^2).
-
-Everything here is NumPy in float64 with a hand-derived gradient (checked by
-finite differences), so it does not rely on autograd at all.
-
-Problem (theta = (W, b), W in R^{C x p}, b in R^C):
-    min  f(W, b) + lam * ||W||_1
-    f = (1/n) sum_i [ alpha T^2 KL(q_i || softmax(z_i / T)) + (1-alpha) CE(y_i, softmax(z_i)) ]
-    z_i = W x_i + b,   q_i = softmax(teacher_logits_i / T)
-
-    python convex_check.py --n 500 --iters 5000
-"""
+# Verify proximal solvers on a convex linear student: minimize KD loss plus
+# L1 on W, and compare ISTA/FISTA with a CVXPY reference solution.
 import argparse
 import json
 import os
@@ -45,6 +30,8 @@ def log_softmax(Z):
 
 
 class KDProblem:
+    # X: (n, p) features; Y: (n, C) one-hot labels; Q: (n, C) teacher
+    # probabilities. W: (C, p), b: (C,). f is smooth; F includes L1 on W.
     def __init__(self, X, Y, Q, T, alpha, lam):
         self.X, self.Y, self.Q, self.T, self.alpha, self.lam = X, Y, Q, T, alpha, lam
         self.n, self.p = X.shape
@@ -59,8 +46,8 @@ class KDProblem:
         return self.alpha * self.T ** 2 * kl + (1 - self.alpha) * ce
 
     def grad(self, W, b):
-        """d f / d z_i = [ alpha*T*(softmax(z_i/T) - q_i) + (1-alpha)*(softmax(z_i) - y_i) ] / n
-        then chain rule through z = XW^T + b."""
+        # Return (grad_W, grad_b). First compute d f/d logits, then use
+        # z = X W.T + b to obtain G.T @ X and sum(G) over examples.
         Z = self.X @ W.T + b
         G = (self.alpha * self.T * (softmax(Z / self.T) - self.Q)
              + (1 - self.alpha) * (softmax(Z) - self.Y)) / self.n
@@ -73,9 +60,8 @@ class KDProblem:
         return self.f(W, b) + self.h(W)
 
     def lipschitz(self):
-        """Hessian of log-sum-exp is <= 1/2 I, and the T^2 factor exactly
-        cancels the 1/T^2 from z/T, so grad f is L-Lipschitz with
-        L = ||[X 1]||_2^2 / (2n)   -- independent of T and alpha."""
+        # Safe L for grad f: ||[X 1]||_2^2/(2n). The softmax Hessian is
+        # bounded by 1/2, and T^2 cancels the temperature's 1/T^2 factor.
         Xt = np.hstack([self.X, np.ones((self.n, 1))])
         return np.linalg.norm(Xt, 2) ** 2 / (2 * self.n)
 
@@ -86,6 +72,8 @@ def soft(V, tau):
 
 # ------------------------------------------------------------------ solvers
 def ista(P, L, iters):
+    # Return (W, b, objective_history) after gradient steps of 1/L and
+    # soft-thresholding W; the unpenalized bias takes only the gradient step.
     W, b = np.zeros((P.C, P.p)), np.zeros(P.C)
     hist = []
     for _ in range(iters):
@@ -96,6 +84,8 @@ def ista(P, L, iters):
 
 
 def fista(P, L, iters):
+    # Same objective/outputs as ISTA, with Nesterov extrapolation before each
+    # gradient/prox step to accelerate convergence for this convex problem.
     W, b = np.zeros((P.C, P.p)), np.zeros(P.C)
     yW, yb, t = W.copy(), b.copy(), 1.0
     hist = []
@@ -111,8 +101,8 @@ def fista(P, L, iters):
 
 
 def fista_backtracking(P, L0, iters, eta=2.0):
-    """FISTA with Beck & Teboulle backtracking: increase L until the quadratic
-    upper model f(y) + <g, x-y> + L/2 ||x-y||^2 really upper-bounds f(x)."""
+    # Return (W, b, objective_history, L_history). Increase L until the
+    # quadratic model of the smooth loss upper-bounds the proposed step.
     W, b = np.zeros((P.C, P.p)), np.zeros(P.C)
     yW, yb, t, L = W.copy(), b.copy(), 1.0, L0
     hist, Ls = [], []
@@ -149,8 +139,8 @@ def solve_cvxpy(P):
 
 
 def lambda_max(P, L):
-    """Smallest lam for which W = 0 is optimal: lam_max = ||grad_W f(0, b*)||_inf,
-    with b* the best bias when W = 0 (found by gradient descent on b alone)."""
+    # Return ||grad_W f(0, b*)||_inf: the L1 strength above which zero W
+    # is optimal. Approximate the best bias b* by gradient descent.
     W, b = np.zeros((P.C, P.p)), np.zeros(P.C)
     for _ in range(3000):
         b = b - P.grad(W, b)[1] / 0.5          # f restricted to b is (1/2)-smooth

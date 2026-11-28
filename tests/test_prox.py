@@ -1,9 +1,5 @@
-"""Checks that each closed-form proximal operator really is
-argmin_w h(w) + 1/(2*eta)||w - v||^2, by comparing it with random perturbations,
-plus a check that the compacted student network is exactly equivalent.
-
-    python -m tests.test_prox
-"""
+# Check proximal outputs against nearby perturbations and verify compact MLP
+# logits match the original after removing dead neurons/inputs.
 import torch
 
 from src.prox import soft_threshold, topk_masks, block_soft_threshold_rows

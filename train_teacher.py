@@ -1,11 +1,5 @@
-"""Step 1: train the large teacher CNN once and save it.
-
-The teacher is not the subject of the optimisation study, so it is trained
-with a standard library optimiser (SGD + Nesterov momentum + weight decay)
-and data augmentation, purely to get an accurate model to distil from.
-
-    python train_teacher.py --dataset fashion --epochs 15
-"""
+# Train the teacher CNN with augmented images and save its checkpoint/metrics.
+# Run before convex_check.py or run_experiments.py; students reuse this teacher.
 import argparse
 import json
 import math

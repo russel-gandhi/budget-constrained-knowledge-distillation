@@ -1,11 +1,5 @@
-"""Quick live demo (~20-40 s on a GPU): distil the teacher into a student that
-may keep only a small fraction of its weights, using KD + IHT, and print what
-the solver did.
-
-    python demo.py                 # 2% budget
-    python demo.py --budget 0.01   # 1% budget
-Needs results/teacher_fashion.pt (run train_teacher.py first, ~3 min).
-"""
+# Quick KD + IHT student run with a configurable weight fraction (default 2%).
+# Requires the teacher checkpoint from train_teacher.py.
 import argparse
 import os
 import time

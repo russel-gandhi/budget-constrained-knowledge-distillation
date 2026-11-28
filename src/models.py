@@ -1,15 +1,10 @@
-"""Teacher and student networks."""
+# Architectures used for teacher training and student compression.
 import torch.nn as nn
 import torch.nn.functional as F
 
 
 class TeacherCNN(nn.Module):
-    """Large convolutional teacher (~1.9M parameters).
-
-    Two VGG-style blocks (conv-BN-ReLU x2, max-pool) followed by a two-layer
-    classifier with dropout. Its only job is to be accurate; it is trained once
-    with a standard optimiser and then frozen.
-    """
+    # CNN teacher: two conv/BN/ReLU blocks with pooling, then a classifier.
 
     def __init__(self, num_classes: int = 10):
         super().__init__()
@@ -33,13 +28,8 @@ class TeacherCNN(nn.Module):
 
 
 class StudentMLP(nn.Module):
-    """Small fully connected student, default 784-300-100-10 (266,610 params).
-
-    This is the classic "LeNet-300-100" used throughout the pruning
-    literature, so our numbers are comparable in spirit to published ones.
-    A plain MLP also makes neuron-level (group) sparsity easy to interpret:
-    a zero row of a weight matrix = a deleted neuron.
-    """
+    # Flattened image -> hidden layers -> class logits; sizes defaults to
+    # 784-300-100-10. Each weight row corresponds to one output neuron.
 
     def __init__(self, sizes=(784, 300, 100, 10)):
         super().__init__()
